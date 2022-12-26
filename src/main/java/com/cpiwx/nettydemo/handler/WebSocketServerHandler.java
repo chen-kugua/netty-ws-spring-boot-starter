@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     ConcurrentHashMap<String, ChannelHandlerContext> onlineContainer = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, String> userId2SessionIdMap = new ConcurrentHashMap<>();
 
     /**
      * 经过测试，在 ws 的 uri 后面不能传递参数，不然在 netty 实现 websocket 协议握手的时候会出现断开连接的情况。
@@ -49,7 +50,9 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
                 String userId = params.get(Constants.USER_ID);
                 if (userId != null) {
                     log.info("用户{}上线", userId);
-                    onlineContainer.put(userId, ctx);
+                    String sessionId = ctx.channel().id().asShortText();
+                    userId2SessionIdMap.put(userId, sessionId);
+                    onlineContainer.put(sessionId, ctx);
                 }
                 request.setUri(Constants.DEFAULT_WEB_SOCKET_LINK);
             }
@@ -77,15 +80,42 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         // ctx.channel().id() 表示唯一的值
-        System.out.println("handlerRemoved 被调用， channel.id.longText = " + ctx.channel().id().asLongText());
+        String sessionId = ctx.channel().id().asShortText();
+        System.out.println("sessionId = " + sessionId + "断开连接");
+        onlineContainer.remove(sessionId);
+        removeUser(sessionId);
+    }
+
+    private String getUserId(String sessionId) {
+        for (Map.Entry<String, String> entry : userId2SessionIdMap.entrySet()) {
+            if (sessionId.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    private void removeUser(String sessionId) {
+        if (null != sessionId) {
+            String userId = getUserId(sessionId);
+            if (userId != null) {
+                userId2SessionIdMap.remove(sessionId);
+            }
+        }
     }
 
     // 处理异常
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         System.out.println("异常发生，异常消息 = " + cause.getMessage());
+        String sessionId = ctx.channel().id().asShortText();
         // 关闭连接
         ctx.channel().close();
+        onlineContainer.remove(sessionId);
+        String userId = getUserId(sessionId);
+        if (userId != null) {
+            userId2SessionIdMap.remove(userId);
+        }
     }
 
 
