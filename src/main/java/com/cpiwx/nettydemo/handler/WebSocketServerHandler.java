@@ -2,11 +2,13 @@ package com.cpiwx.nettydemo.handler;
 
 import cn.hutool.core.date.DateUtil;
 import com.cpiwx.nettydemo.constant.Constants;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Author chenPan
  */
 @Slf4j
+@Component
+@ChannelHandler.Sharable
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     ConcurrentHashMap<String, ChannelHandlerContext> onlineContainer = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, String> userId2SessionIdMap = new ConcurrentHashMap<>();
