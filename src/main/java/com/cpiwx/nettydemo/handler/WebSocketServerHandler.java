@@ -27,6 +27,9 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
      * 经过测试，在 ws 的 uri 后面不能传递参数，不然在 netty 实现 websocket 协议握手的时候会出现断开连接的情况。
      * 针对这种情况在 websocketHandler 之前做了一层 地址过滤，然后重写
      * request 的 uri，并传入下一个管道中，基本上解决了这个问题。
+     * <p>
+     * 连接时不带参数可以在发送消息时带上消息type类型  如果类型为建立连接 则把参数中带的id加入到用户池中管理  如果为其他类型消息
+     * 则先校验 是否已被池子管理 否则抛异常断开连接
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
