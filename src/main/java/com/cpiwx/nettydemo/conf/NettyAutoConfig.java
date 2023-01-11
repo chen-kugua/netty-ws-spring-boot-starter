@@ -14,11 +14,11 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import javax.annotation.Resource;
 
@@ -29,9 +29,11 @@ import javax.annotation.Resource;
  * @Date 2022/12/23 17:51
  * @Author chenPan
  */
-@Configuration
-public class NettyConfig {
-
+@Slf4j
+// @Configuration 不需要 因为@EnableNetty注解用@Import导入了本类
+@EnableConfigurationProperties(NettyProperties.class)
+@Import(NettyServerBot.class)
+public class NettyAutoConfig {
     @Resource
     private NettyProperties nettyProperties;
 
@@ -63,10 +65,10 @@ public class NettyConfig {
      * @return
      */
     @Bean
-    public ServerBootstrap serverBootstrap() {
+    public ServerBootstrap serverBootstrap(NioEventLoopGroup boosGroup, NioEventLoopGroup workerGroup) {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap
-                .group(boosGroup(), workerGroup())   // 指定使用的线程组
+                .group(boosGroup, workerGroup)   // 指定使用的线程组
                 .channel(NioServerSocketChannel.class) // 指定使用的通道
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nettyProperties.getTimeout()) // 指定连接超时时间
                 .childHandler(new ChannelInitializer<SocketChannel>() {

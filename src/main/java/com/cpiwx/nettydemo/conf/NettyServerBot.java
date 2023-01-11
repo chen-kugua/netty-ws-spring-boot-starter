@@ -3,28 +3,32 @@ package com.cpiwx.nettydemo.conf;
 import com.cpiwx.nettydemo.properties.NettyProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 
 /**
- * @Classname NettyServer
- * @Description netty 服务端
- * @Date 2023/1/10 17:35
+ * @Classname NettyServerBot
+ * @Description TODO
+ * @Date 2023/1/11 9:33
  * @Author chenPan
  */
 @Slf4j
-@RequiredArgsConstructor
-public class NettyServer {
-    private final ServerBootstrap serverBootstrap;
-    private final NioEventLoopGroup boosGroup;
-    private final NioEventLoopGroup workerGroup;
-    private final NettyProperties nettyProperties;
+public class NettyServerBot {
+    @Resource
+    private NettyProperties nettyProperties;
+    @Resource
+    private ServerBootstrap serverBootstrap;
+    @Resource
+    private NioEventLoopGroup boosGroup;
+    @Resource
+    private NioEventLoopGroup workerGroup;
 
     /**
      * 开机启动
@@ -49,4 +53,5 @@ public class NettyServer {
         boosGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
     }
+
 }

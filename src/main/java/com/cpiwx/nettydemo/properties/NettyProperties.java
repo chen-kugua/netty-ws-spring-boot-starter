@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
  * @Author chenPan
  */
 @ConfigurationProperties(prefix = "netty.ws")
-@Configuration
 @Data
 public class NettyProperties {
     /**

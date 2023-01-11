@@ -52,6 +52,7 @@
     </dependencies>
 
     <build>
+<!--        作为jar供其他项目使用时注释掉-->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

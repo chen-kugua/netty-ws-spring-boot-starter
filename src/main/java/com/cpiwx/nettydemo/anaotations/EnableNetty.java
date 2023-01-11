@@ -1,6 +1,6 @@
 package com.cpiwx.nettydemo.anaotations;
 
-import com.cpiwx.nettydemo.conf.NettyServer;
+import com.cpiwx.nettydemo.conf.NettyAutoConfig;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
@@ -14,6 +14,6 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(NettyServer.class)
+@Import(NettyAutoConfig.class)
 public @interface EnableNetty {
 }
