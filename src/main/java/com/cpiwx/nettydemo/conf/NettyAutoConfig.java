@@ -12,7 +12,10 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.WebSocketFrameDecoder;
+import io.netty.handler.codec.http.websocketx.WebSocketFrameEncoder;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -65,7 +68,7 @@ public class NettyAutoConfig {
      * @return
      */
     @Bean
-    public ServerBootstrap serverBootstrap(NioEventLoopGroup boosGroup, NioEventLoopGroup workerGroup) {
+    public ServerBootstrap serverBootstrap(NioEventLoopGroup boosGroup, NioEventLoopGroup workerGroup,WebSocketServerHandler handler) {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
         serverBootstrap
                 .group(boosGroup, workerGroup)   // 指定使用的线程组
@@ -84,8 +87,9 @@ public class NettyAutoConfig {
                                 new HttpObjectAggregator(65536));
                         // 大文件写入的类
                         pipeline.addLast("http-chunked", new ChunkedWriteHandler());
+                        pipeline.addLast(new WebSocketServerCompressionHandler()); // 支持WebSocket压缩
                         // 自定义处理器 需要在WebSocketServerProtocolHandler之前 处理url带参数问题
-                        pipeline.addLast(new WebSocketServerHandler());
+                        pipeline.addLast(handler);
                         // websocket 处理类
                         pipeline.addLast(new WebSocketServerProtocolHandler(Constants.DEFAULT_WEB_SOCKET_LINK));
                     }

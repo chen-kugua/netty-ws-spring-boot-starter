@@ -1,7 +1,7 @@
 package com.cpiwx.nettydemo.controller;
 
-import cn.hutool.core.util.ObjectUtil;
-import com.cpiwx.nettydemo.model.dto.TestDto;
+import cn.hutool.core.util.IdUtil;
+import com.cpiwx.nettydemo.utils.TokenUtil;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class TestController {
-    @GetMapping("/test")
-    public String test(TestDto dto) {
-        return ObjectUtil.isEmpty(dto) ? "empty" : dto.toString();
+    @GetMapping("/login")
+    public String test(String userId, String password) {
+        String token = IdUtil.simpleUUID();
+        TokenUtil.putUser(token, userId);
+        return token;
     }
+
+
 }

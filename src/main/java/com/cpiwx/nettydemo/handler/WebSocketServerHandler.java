@@ -1,18 +1,26 @@
 package com.cpiwx.nettydemo.handler;
 
-import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
-import com.cpiwx.nettydemo.dto.MessageDto;
+import com.cpiwx.nettydemo.constant.Constants;
+import com.cpiwx.nettydemo.enums.ErrorCodeEnum;
 import com.cpiwx.nettydemo.enums.MessageTypeEnum;
+import com.cpiwx.nettydemo.model.Result;
+import com.cpiwx.nettydemo.model.dto.LoginDTO;
+import com.cpiwx.nettydemo.model.dto.MessageDTO;
+import com.cpiwx.nettydemo.utils.RequestMappingUtil;
+import com.cpiwx.nettydemo.utils.TokenUtil;
+import com.cpiwx.nettydemo.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 /**
  * @Classname WebSocketServerHandler
@@ -24,8 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @ChannelHandler.Sharable
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
-    // userId  channel
-    ConcurrentHashMap<String, ChannelHandlerContext> onlineContainer = new ConcurrentHashMap<>();
 
     /**
      * 经过测试，在 ws 的 uri 后面不能传递参数，不然在 netty 实现 websocket 协议握手的时候会出现断开连接的情况。
@@ -69,55 +75,91 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
 
     // 读取客户端发送的请求报文
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
-        System.out.println("服务器端收到消息 = " + msg.text());
-        if (!JSONUtil.isJson(msg.text())) {
-            // 回复消息
-            ctx.channel().writeAndFlush(new TextWebSocketFrame(DateUtil.now() + "服务器回复:" + msg.text()));
-        } else {
-            MessageDto message = JSONUtil.toBean(msg.text(), MessageDto.class);
-            Integer type = message.getType();
-            if (MessageTypeEnum.CONNECT.type.equals(type)) {
-                //    建立连接
-                onlineContainer.put(message.getFromId(), ctx);
-                // 将用户ID作为自定义属性加入到channel中，方便随时channel中获取用户ID
-                AttributeKey<String> key = AttributeKey.valueOf("userId");
-                ctx.channel().attr(key).setIfAbsent(message.getFromId());
-            } else if (MessageTypeEnum.CHAT.equals(type)) {
-                //    todo
-            }
+    protected void messageReceived(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
+        try {
+            handleRequest(ctx, msg);
+        } catch (Exception e) {
+            log.error("处理ws消息异常", e);
+            handleError(ctx, e);
         }
+    }
+
+    private void handleError(ChannelHandlerContext ctx, Exception e) {
+        WsMessageUtil.sendMsg(ctx, Result.fail(Optional.ofNullable(e.getMessage()).orElse("系统NPE异常")));
+    }
+
+    private void handleRequest(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
+        String body = msg.text();
+        log.info("服务器端收到消息 = " + body);
+        if (!JSONUtil.isJson(body)) {
+            ctx.channel().writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(Result.fail(ErrorCodeEnum.body_err))));
+            return;
+        }
+        MessageDTO messageDto = JSONUtil.toBean(body, MessageDTO.class);
+        String type = messageDto.getType();
+        if (MessageTypeEnum.CONNECT.name().equals(type)) {
+            log.info("connect。。。。。。");
+            String content = messageDto.getContent();
+            LoginDTO dto = JSONUtil.toBean(content, LoginDTO.class);
+            String token = IdUtil.simpleUUID();
+            WsMessageUtil.putUser(dto.getUserId(), ctx);
+            TokenUtil.putUser(token, dto.getUserId());
+            ctx.channel().attr(AttributeKey.valueOf(Constants.HEADER_TOKEN)).set(token);
+            ctx.channel().attr(AttributeKey.valueOf(Constants.USER_ID)).set(dto.getUserId());
+            WsMessageUtil.sendMsg(ctx, Result.ok("login success"));
+            return;
+        }
+        Object token = ctx.channel().attr(AttributeKey.valueOf(Constants.HEADER_TOKEN)).get();
+        boolean validToken = TokenUtil.isValidToken(token);
+        if (!validToken) {
+            ctx.disconnect();
+            WsMessageUtil.removeUser(ctx);
+            return;
+        }
+        log.info("token验证通过");
+        // 处理消息
+        handleMessage(ctx, messageDto);
+    }
+
+    private void handleMessage(ChannelHandlerContext ctx, MessageDTO messageDto) {
+        MessageTypeEnum typeEnum = messageDto.getTypeEnum();
+        switch (typeEnum) {
+            case API:
+                handleApi(ctx, messageDto);
+                break;
+        }
+
+    }
+
+    private void handleApi(ChannelHandlerContext ctx, MessageDTO messageDto) {
+        String content = messageDto.getContent();
+        String apiPath = messageDto.getApiPath();
+        Object res = RequestMappingUtil.handle(apiPath, content);
+        WsMessageUtil.sendMsg(ctx, res);
     }
 
     // 当web客户端连接后，触发该方法
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         // ctx.channel().id() 表示唯一的值
-        System.out.println("handlerAdded 被调用， channel.id.longText = " + ctx.channel().id().asLongText());
-        System.out.println("handlerAdded 被调用， channel.id.shortText = " + ctx.channel().id().asShortText());
+        ChannelId id = ctx.channel().id();
+        log.info("【{}】建立连接", id);
     }
 
     // 客户端离线
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         // ctx.channel().id() 表示唯一的值
-        removeUserId(ctx);
+        WsMessageUtil.removeUser(ctx);
     }
 
 
     // 处理异常
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println("异常发生，异常消息 = " + cause.getMessage());
-        removeUserId(ctx);
+        log.error("异常发生，异常消息 ", cause);
+        WsMessageUtil.removeUser(ctx);
     }
-    /**
-     * 删除用户与channel的对应关系
-     */
-    private void removeUserId(ChannelHandlerContext ctx) {
-        AttributeKey<String> key = AttributeKey.valueOf("userId");
-        String userId = ctx.channel().attr(key).get();
-        onlineContainer.remove(userId);
-    }
+
 
 }

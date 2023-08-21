@@ -9,4 +9,6 @@ package com.cpiwx.nettydemo.constant;
 public class Constants {
     public static final String DEFAULT_WEB_SOCKET_LINK = "/ws";
     public static final String USER_ID = "userId";
+
+    public static final String HEADER_TOKEN = "token";
 }
