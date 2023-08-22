@@ -67,6 +67,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <!--打包会出现两个 jar -exec后缀的是springboot可执行包 文件在boot-inf里-->
+                    <!-- 没有后缀的是可以被其他项目引用的包-->
+                    <classifier>exec</classifier>
                 </configuration>
             </plugin>
         </plugins>
