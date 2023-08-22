@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.cpiwx</groupId>
-    <artifactId>nettyDemo</artifactId>
+    <artifactId>netty-ws-spring-boot-starter</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>nettyDemo</name>
     <description>nettyDemo</description>
@@ -17,11 +17,6 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -32,8 +27,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
-        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
@@ -62,7 +55,7 @@
     </dependencies>
 
     <build>
-<!--        作为jar供其他项目使用时注释掉-->
+        <finalName>netty-ws-spring-boot-starter</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
