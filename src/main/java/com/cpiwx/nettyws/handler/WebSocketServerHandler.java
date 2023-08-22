@@ -1,17 +1,15 @@
 package com.cpiwx.nettyws.handler;
 
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.cpiwx.nettyws.constant.Constants;
 import com.cpiwx.nettyws.enums.ErrorCodeEnum;
 import com.cpiwx.nettyws.enums.MessageTypeEnum;
 import com.cpiwx.nettyws.model.Result;
-import com.cpiwx.nettyws.model.dto.LoginDTO;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import com.cpiwx.nettyws.service.CheckTokenService;
+import com.cpiwx.nettyws.service.MessageHandler;
 import com.cpiwx.nettyws.utils.RequestMappingUtil;
-import com.cpiwx.nettyws.utils.TokenUtil;
 import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,7 +18,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.util.AttributeKey;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +40,9 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
 
     @Setter(onMethod_ = @Autowired(required = false))
     private CheckTokenService checkTokenService;
+
+    @Setter(onMethod_ = @Autowired(required = false))
+    private MessageHandler messageHandler;
 
     /**
      * 经过测试，在 ws 的 uri 后面不能传递参数，不然在 netty 实现 websocket 协议握手的时候会出现断开连接的情况。
@@ -85,7 +85,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
     // }
 
     // 读取客户端发送的请求报文
+
+    /**
+     * 首次建立连接和 每次收到消息都会进入
+     *
+     * @param ctx 通道
+     * @param msg 数据
+     * @throws Exception 异常
+     */
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        // 第一次建立连接时校验Token
         if (msg instanceof FullHttpRequest) {
             if (nettyProperties.isNeedCheckToken()) {
                 FullHttpRequest request = (FullHttpRequest) msg;
@@ -106,10 +115,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
                 log.info("token验证通过：{}", token);
             }
         }
+        // 处理消息
         super.channelRead(ctx, msg);
     }
 
-
+    /**
+     * 处理消息
+     *
+     * @param ctx 通道上下文
+     * @param msg 数据
+     */
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
         try {
@@ -121,40 +136,34 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
     }
 
     private void handleError(ChannelHandlerContext ctx, Exception e) {
-        WsMessageUtil.sendMsg(ctx, Result.fail(Optional.ofNullable(e.getMessage()).orElse("系统NPE异常")));
+        WsMessageUtil.sendMsg(ctx, Result.fail(Optional.ofNullable(e.getMessage()).orElse("系统空指针异常")));
     }
 
     private void handleRequest(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
         String body = msg.text();
         log.info("服务器端收到消息 = " + body);
+        if (Constants.PING.equals(body)) {
+            log.debug("received ping");
+            WsMessageUtil.sendMsg(ctx, Constants.PONG);
+            return;
+        }
         if (!JSONUtil.isJson(body)) {
-            ctx.channel().writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(Result.fail(ErrorCodeEnum.body_err))));
+            WsMessageUtil.sendMsg(ctx, Result.fail(ErrorCodeEnum.body_err));
             return;
         }
         MessageDTO messageDto = JSONUtil.toBean(body, MessageDTO.class);
-        String type = messageDto.getType();
-        if (MessageTypeEnum.CONNECT.name().equals(type)) {
-            log.info("connect。。。。。。");
-            String content = messageDto.getContent();
-            LoginDTO dto = JSONUtil.toBean(content, LoginDTO.class);
-            String token = IdUtil.simpleUUID();
-            WsMessageUtil.putUser(dto.getUserId(), ctx);
-            TokenUtil.putUser(token, dto.getUserId());
-            ctx.channel().attr(AttributeKey.valueOf(Constants.HEADER_TOKEN)).set(token);
-            ctx.channel().attr(AttributeKey.valueOf(Constants.USER_ID)).set(dto.getUserId());
-            WsMessageUtil.sendMsg(ctx, Result.ok("login success"));
-            return;
-        }
         // 处理消息
         handleMessage(ctx, messageDto);
     }
 
     private void handleMessage(ChannelHandlerContext ctx, MessageDTO messageDto) {
-        MessageTypeEnum typeEnum = messageDto.getTypeEnum();
-        switch (typeEnum) {
-            case API:
-                handleApi(ctx, messageDto);
-                break;
+        String type = messageDto.getType();
+        if (MessageTypeEnum.API.name().equalsIgnoreCase(type)) {
+            handleApi(ctx, messageDto);
+        } else {
+            if (messageHandler != null) {
+                messageHandler.handle(ctx, messageDto);
+            }
         }
 
     }

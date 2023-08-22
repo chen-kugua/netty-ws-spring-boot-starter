@@ -1,6 +1,5 @@
 package com.cpiwx.nettyws.model.dto;
 
-import com.cpiwx.nettyws.enums.MessageTypeEnum;
 import lombok.Data;
 
 /**
@@ -23,7 +22,5 @@ public class MessageDTO {
 
     private String content;
 
-    public MessageTypeEnum getTypeEnum() {
-        return MessageTypeEnum.valueOf(MessageTypeEnum.class, this.type);
-    }
+
 }
