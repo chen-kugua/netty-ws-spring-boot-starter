@@ -1,12 +1,14 @@
 package com.cpiwx.nettyws.config;
 
 import com.cpiwx.nettyws.constant.Constants;
+import com.cpiwx.nettyws.handler.RequestHandler;
 import com.cpiwx.nettyws.handler.WebSocketServerHandler;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -17,8 +19,10 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 import javax.annotation.Resource;
 
@@ -32,6 +36,7 @@ import javax.annotation.Resource;
 @Slf4j
 // @Configuration 不需要 因为@EnableNetty注解用@Import导入了本类
 @EnableConfigurationProperties(NettyProperties.class)
+@Import({NettyServerBot.class, RequestHandler.class})
 public class NettyAutoConfig {
     @Resource
     private NettyProperties nettyProperties;
@@ -58,6 +63,13 @@ public class NettyAutoConfig {
         return new NioEventLoopGroup(nettyProperties.getWorkerNum());
     }
 
+    @Bean
+    @ConditionalOnMissingBean(value = SimpleChannelInboundHandler.class)
+    public WebSocketServerHandler webSocketServerHandler() {
+        return new WebSocketServerHandler();
+    }
+
+
     /**
      * 服务器启动器
      *
@@ -76,26 +88,25 @@ public class NettyAutoConfig {
                     protected void initChannel(SocketChannel ch) {
                         // http 的解码器
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("http-codec",
+                        pipeline.addLast(
                                 new HttpServerCodec());
                         //  负责将 Http 的一些信息例如版本
                         // 和 Http 的内容继承一个 FullHttpRequesst
-                        pipeline.addLast("aggregator",
+                        pipeline.addLast(
                                 new HttpObjectAggregator(65536));
                         // 大文件写入的类
-                        pipeline.addLast("http-chunked", new ChunkedWriteHandler());
-                        pipeline.addLast(new WebSocketServerCompressionHandler()); // 支持WebSocket压缩
-                        // 自定义处理器 需要在WebSocketServerProtocolHandler之前 处理url带参数问题
-                        pipeline.addLast(handler);
+                        pipeline.addLast(new ChunkedWriteHandler());
+                        // 支持WebSocket压缩
+                        pipeline.addLast(new WebSocketServerCompressionHandler());
                         // websocket 处理类
+                        // 构造参数的意思
+                        // 表示客户端请求 WebSocket 握手的路径。当客户端请求连接到服务器时，服务器会根据这个路径来判断是否进行 WebSocket 握手处理。
                         pipeline.addLast(new WebSocketServerProtocolHandler(Constants.DEFAULT_WEB_SOCKET_LINK));
+                        // 自定义处理器
+                        pipeline.addLast(handler);
                     }
                 });
         return serverBootstrap;
     }
 
-    @Bean
-    public NettyServerBot nettyServerBot() {
-        return new NettyServerBot();
-    }
 }

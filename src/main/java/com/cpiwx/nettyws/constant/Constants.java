@@ -7,6 +7,8 @@ package com.cpiwx.nettyws.constant;
  * @Author chenPan
  */
 public class Constants {
+    // 客户端连接时就需要 ws://host:port/ws
+    // 如果没有末尾的ws路径 会导致请求不走websocket握手一直处于连接中状态 建立连接不成功
     public static final String DEFAULT_WEB_SOCKET_LINK = "/ws";
     public static final String USER_ID = "userId";
 

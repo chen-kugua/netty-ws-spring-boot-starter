@@ -32,7 +32,6 @@ import java.util.Optional;
  * @Author chenPan
  */
 @Slf4j
-@Component
 @ChannelHandler.Sharable
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
     @Setter(onMethod_ = @Autowired)
@@ -93,6 +92,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
      * @param msg 数据
      * @throws Exception 异常
      */
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         // 第一次建立连接时校验Token
         if (msg instanceof FullHttpRequest) {
@@ -119,13 +119,24 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
         super.channelRead(ctx, msg);
     }
 
+    @Override
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, TextWebSocketFrame textWebSocketFrame) throws Exception {
+        try {
+            handleRequest(channelHandlerContext, textWebSocketFrame);
+        } catch (Exception e) {
+            log.error("处理ws消息异常", e);
+            handleError(channelHandlerContext, e);
+        }
+    }
+
     /**
      * 处理消息
      *
      * @param ctx 通道上下文
      * @param msg 数据
      */
-    @Override
+    // netty5.X版本为messageReceived方法 4.X为channelRead0
+    // @Override
     protected void messageReceived(ChannelHandlerContext ctx, TextWebSocketFrame msg) {
         try {
             handleRequest(ctx, msg);
