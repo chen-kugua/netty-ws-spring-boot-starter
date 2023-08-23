@@ -1,5 +1,6 @@
 package com.cpiwx.nettyws.config;
 
+import cn.hutool.core.util.StrUtil;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +26,11 @@ public class NettyServerBot implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // 绑定端口启动
         log.info("启动Netty服务器=====》");
-        serverBootstrap.bind(nettyProperties.getPort()).sync();
-        log.info("启动成功，运行端口: {}", nettyProperties.getPort());
+        String[] split = nettyProperties.getPort().split(StrUtil.COMMA);
+        for (String port : split) {
+            serverBootstrap.bind(Integer.parseInt(port)).sync();
+            log.info("启动成功，运行端口: {}", port);
+        }
     }
-
 
 }

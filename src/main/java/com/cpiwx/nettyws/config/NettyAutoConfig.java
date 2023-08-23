@@ -4,6 +4,8 @@ import com.cpiwx.nettyws.constant.Constants;
 import com.cpiwx.nettyws.handler.RequestHandler;
 import com.cpiwx.nettyws.handler.WebSocketServerHandler;
 import com.cpiwx.nettyws.properties.NettyProperties;
+import com.cpiwx.nettyws.service.UserTokenService;
+import com.cpiwx.nettyws.service.UserTokenServiceDefaultImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -17,6 +19,7 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -49,7 +52,7 @@ public class NettyAutoConfig {
      */
     @Bean(destroyMethod = "shutdownGracefully")
     public NioEventLoopGroup bossGroup() {
-        return new NioEventLoopGroup(nettyProperties.getBossNum());
+        return new NioEventLoopGroup(nettyProperties.getBossNum(), new DefaultThreadFactory("bossGroup"));
     }
 
     /**
@@ -60,15 +63,13 @@ public class NettyAutoConfig {
      */
     @Bean(destroyMethod = "shutdownGracefully")
     public NioEventLoopGroup workerGroup() {
-        return new NioEventLoopGroup(nettyProperties.getWorkerNum());
+        return new NioEventLoopGroup(nettyProperties.getWorkerNum(), new DefaultThreadFactory("workerGroup"));
     }
 
     @Bean
-    @ConditionalOnMissingBean(value = SimpleChannelInboundHandler.class)
     public WebSocketServerHandler webSocketServerHandler() {
         return new WebSocketServerHandler();
     }
-
 
     /**
      * 服务器启动器
@@ -98,15 +99,20 @@ public class NettyAutoConfig {
                         pipeline.addLast(new ChunkedWriteHandler());
                         // 支持WebSocket压缩
                         pipeline.addLast(new WebSocketServerCompressionHandler());
+                        // 自定义处理器 在websocket握手之前重写URL url带参数会报错 （校验Token）
+                        pipeline.addLast(handler);
                         // websocket 处理类
                         // 构造参数的意思
                         // 表示客户端请求 WebSocket 握手的路径。当客户端请求连接到服务器时，服务器会根据这个路径来判断是否进行 WebSocket 握手处理。
-                        pipeline.addLast(new WebSocketServerProtocolHandler(Constants.DEFAULT_WEB_SOCKET_LINK));
-                        // 自定义处理器
-                        pipeline.addLast(handler);
+                        pipeline.addLast(new WebSocketServerProtocolHandler(nettyProperties.getEndpoint()));
                     }
                 });
         return serverBootstrap;
     }
 
+    @Bean
+    @ConditionalOnMissingBean(UserTokenService.class)
+    public UserTokenService userTokenService() {
+        return new UserTokenServiceDefaultImpl();
+    }
 }

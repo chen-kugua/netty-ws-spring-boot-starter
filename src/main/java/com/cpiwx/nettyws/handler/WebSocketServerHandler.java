@@ -7,8 +7,9 @@ import com.cpiwx.nettyws.enums.MessageTypeEnum;
 import com.cpiwx.nettyws.model.Result;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
 import com.cpiwx.nettyws.properties.NettyProperties;
-import com.cpiwx.nettyws.service.CheckTokenService;
-import com.cpiwx.nettyws.service.MessageHandler;
+import com.cpiwx.nettyws.service.UserTokenService;
+import com.cpiwx.nettyws.utils.ChannelAttrUtil;
+import com.cpiwx.nettyws.utils.ParamUtil;
 import com.cpiwx.nettyws.utils.RequestMappingUtil;
 import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandler;
@@ -16,13 +17,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -38,52 +38,16 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
     private NettyProperties nettyProperties;
 
     @Setter(onMethod_ = @Autowired(required = false))
-    private CheckTokenService checkTokenService;
+    private SingleChatHandler singleChatHandler;
 
     @Setter(onMethod_ = @Autowired(required = false))
-    private MessageHandler messageHandler;
+    private GroupChatHandler groupChatHandler;
 
-    /**
-     * 经过测试，在 ws 的 uri 后面不能传递参数，不然在 netty 实现 websocket 协议握手的时候会出现断开连接的情况。
-     * 针对这种情况在 websocketHandler 之前做了一层 地址过滤，然后重写
-     * request 的 uri，并传入下一个管道中，基本上解决了这个问题。
-     * <p>
-     * 连接时不带参数可以在发送消息时带上消息type类型  如果类型为建立连接 则把参数中带的id加入到用户池中管理  如果为其他类型消息
-     * 则先校验 是否已被池子管理 否则抛异常断开连接
-     */
-    // @Override
-    // public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    //     if (msg instanceof FullHttpRequest) {
-    //         FullHttpRequest request = (FullHttpRequest) msg;
-    //         String uri = request.uri();
-    //         String token = request.headers().get("token");
-    //         String origin = request.headers().get("Origin");
-    //         log.info("token:{}", token);
-    //         log.info("origin:{}", origin);
-    //
-    //         if (null != uri && uri.contains(Constants.DEFAULT_WEB_SOCKET_LINK) && uri.contains("?")) {
-    //             String[] uriArray = uri.split("\\?");
-    //             Map<String, String> params = new HashMap<>();
-    //             for (String param : uriArray) {
-    //                 String[] split = param.split("=");
-    //                 if (split.length == 2) {
-    //                     params.put(split[0], split[1]);
-    //                 }
-    //             }
-    //             String userId = params.get(Constants.USER_ID);
-    //             if (userId != null) {
-    //                 log.info("用户{}上线", userId);
-    //                 String sessionId = ctx.channel().id().asShortText();
-    //                 userId2SessionIdMap.put(userId, sessionId);
-    //                 onlineContainer.put(sessionId, ctx);
-    //             }
-    //             request.setUri(Constants.DEFAULT_WEB_SOCKET_LINK);
-    //         }
-    //     }
-    //     super.channelRead(ctx, msg);
-    // }
+    @Setter(onMethod_ = @Autowired(required = false))
+    private CustomMessageHandler customMessageHandler;
 
-    // 读取客户端发送的请求报文
+    @Setter(onMethod_ = @Autowired)
+    private UserTokenService userTokenService;
 
     /**
      * 首次建立连接和 每次收到消息都会进入
@@ -94,29 +58,44 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        // 第一次建立连接时校验Token
+        // 第一次建立连接时校验Token重置URL 这时连接未正式建立 不能给客户端发消息
         if (msg instanceof FullHttpRequest) {
+            FullHttpRequest request = (FullHttpRequest) msg;
+            String uri = request.uri();
+            // 从URL获取参数
+            Map<String, String> params = ParamUtil.getUriParams(uri);
+            String identity = params.get(nettyProperties.getIdentityKey());
+            if (null == identity) {
+                identity = ctx.channel().id().asShortText();
+            }
+            // 维护客户端映射关系
+            userTokenService.putContext(identity, ctx);
+            ChannelAttrUtil.setAttr(ctx, Constants.IDENTITY_KEY, identity);
+            // 校验token
             if (nettyProperties.isNeedCheckToken()) {
-                FullHttpRequest request = (FullHttpRequest) msg;
-                HttpHeaders headers = request.headers();
-                CharSequence token = headers.get(Constants.HEADER_TOKEN);
-                if (null == checkTokenService) {
-                    log.error("checkToken为true但是未实现checkTokenService");
-                    ctx.channel().disconnect();
-                    return;
-                }
-                boolean validToken = checkTokenService.checkToken(token);
+                String token = params.get(nettyProperties.getTokenKey());
+                boolean validToken = userTokenService.checkToken(token);
                 if (!validToken) {
                     log.warn("Invalid Token:【{}】,disConnect", token);
                     ctx.disconnect();
-                    WsMessageUtil.removeUser(ctx);
                     return;
                 }
                 log.info("token验证通过：{}", token);
+                ChannelAttrUtil.setAttr(ctx, Constants.TOKEN_KEY, token);
             }
+            sendRedirect(request);
         }
         // 处理消息
         super.channelRead(ctx, msg);
+    }
+
+    private void sendRedirect(FullHttpRequest request) {
+        String uri = request.uri();
+        if (uri.contains("?")) {
+            String newUri = uri.substring(0, uri.indexOf("?"));
+            log.debug("重定向uri：{}", newUri);
+            request.setUri(newUri);
+        }
     }
 
     @Override
@@ -158,8 +137,8 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
             WsMessageUtil.sendMsg(ctx, Constants.PONG);
             return;
         }
-        if (!JSONUtil.isJson(body)) {
-            WsMessageUtil.sendMsg(ctx, Result.fail(ErrorCodeEnum.body_err));
+        if (!JSONUtil.isTypeJSON(body)) {
+            WsMessageUtil.sendMsg(ctx, Result.fail(ErrorCodeEnum.BODY_ERR));
             return;
         }
         MessageDTO messageDto = JSONUtil.toBean(body, MessageDTO.class);
@@ -171,19 +150,30 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
         String type = messageDto.getType();
         if (MessageTypeEnum.API.name().equalsIgnoreCase(type)) {
             handleApi(ctx, messageDto);
+        } else if (MessageTypeEnum.SINGLE_CHAT.name().equalsIgnoreCase(type)) {
+            singleChatHandler.handle(ctx, messageDto);
+        } else if (MessageTypeEnum.GROUP_CHAT.name().equalsIgnoreCase(type)) {
+            groupChatHandler.handle(ctx, messageDto);
         } else {
-            if (messageHandler != null) {
-                messageHandler.handle(ctx, messageDto);
+            if (customMessageHandler != null) {
+                customMessageHandler.handle(ctx, messageDto);
+            } else {
+                WsMessageUtil.sendMsg(ctx, Result.fail(ErrorCodeEnum.MESSAGE_TYPE_ERR));
             }
         }
-
     }
 
     private void handleApi(ChannelHandlerContext ctx, MessageDTO messageDto) {
         String content = messageDto.getContent();
         String apiPath = messageDto.getApiPath();
-        Object res = RequestMappingUtil.handle(apiPath, content);
-        WsMessageUtil.sendMsg(ctx, res);
+        try {
+            Object res = RequestMappingUtil.handle(apiPath, content);
+            WsMessageUtil.sendMsg(ctx, res);
+        } catch (Exception e) {
+            log.error("处理API请求时异常", e);
+            String errMsg = Optional.ofNullable(e.getMessage()).orElse("系统空指针异常");
+            WsMessageUtil.sendMsg(ctx, Result.fail(errMsg));
+        }
     }
 
     // 当web客户端连接后，触发该方法
@@ -202,12 +192,14 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<TextWebS
         WsMessageUtil.removeUser(ctx);
     }
 
-
     // 处理异常
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("异常发生，异常消息 ", cause);
-        WsMessageUtil.removeUser(ctx);
+        String identity = ChannelAttrUtil.getAttr(ctx, Constants.IDENTITY_KEY, String.class);
+        if (null != identity) {
+            userTokenService.removeContext(identity);
+        }
     }
 
 
