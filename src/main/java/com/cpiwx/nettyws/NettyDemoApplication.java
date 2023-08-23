@@ -1,6 +1,6 @@
 package com.cpiwx.nettyws;
 
-import com.cpiwx.nettyws.anaotations.EnableNetty;
+import com.cpiwx.nettyws.anaotations.EnableWS;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 掘金 参考文档 netty-im https://juejin.cn/post/7155097684901101599
  */
 @SpringBootApplication
-@EnableNetty
+@EnableWS
 @Slf4j
 public class NettyDemoApplication {
 

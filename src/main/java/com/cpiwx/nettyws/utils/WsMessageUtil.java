@@ -49,7 +49,7 @@ public class WsMessageUtil {
     }
 
     public static void removeUser(ChannelHandlerContext ctx) {
-        Object userId = ctx.channel().attr(AttributeKey.valueOf(Constants.USER_ID)).get();
+        Object userId = ctx.channel().attr(AttributeKey.valueOf(Constants.IDENTITY_KEY)).get();
         if (null != userId) {
             onlineContainer.remove(userId.toString());
         }

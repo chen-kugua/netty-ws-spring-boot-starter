@@ -9,7 +9,9 @@ import lombok.Getter;
 @Getter
 public enum ErrorCodeEnum {
 
-    body_err("100001", "消息体不是JSON");
+    BODY_ERR("100001", "消息体不是JSON"),
+    MESSAGE_TYPE_ERR("100002", "不支持的消息类型"),
+    ;
 
     private final String code;
     private final String details;

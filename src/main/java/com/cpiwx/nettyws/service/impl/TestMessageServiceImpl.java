@@ -2,7 +2,7 @@ package com.cpiwx.nettyws.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.cpiwx.nettyws.model.dto.LoginDTO;
-import com.cpiwx.nettyws.service.MessageService;
+import com.cpiwx.nettyws.service.TestMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  **/
 @Service
 @Slf4j
-public class MessageServiceImpl implements MessageService {
+public class TestMessageServiceImpl implements TestMessageService {
     @Override
     public String test() {
         String id = IdUtil.fastUUID();
