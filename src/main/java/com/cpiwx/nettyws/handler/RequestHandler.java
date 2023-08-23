@@ -1,4 +1,4 @@
-package com.cpiwx.nettyws.config;
+package com.cpiwx.nettyws.handler;
 
 import com.cpiwx.nettyws.anaotations.Request;
 import com.cpiwx.nettyws.anaotations.WsController;
@@ -6,7 +6,6 @@ import com.cpiwx.nettyws.utils.RequestMappingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
@@ -15,9 +14,8 @@ import java.lang.reflect.Method;
  * @date 2023-08-21 16:18
  * @descrition 启动时扫描bean中包含WsController注解的类 将其 @Request注解标注的方法加入路径匹配
  **/
-@Component
 @Slf4j
-public class RequestHandlerConfig implements BeanPostProcessor {
+public class RequestHandler implements BeanPostProcessor {
 
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         Class<?> clazz = bean.getClass();

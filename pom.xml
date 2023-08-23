@@ -15,6 +15,7 @@
     <description>nettyDemo</description>
     <properties>
         <java.version>1.8</java.version>
+        <netty.version>4.1.94.Final</netty.version>
     </properties>
     <dependencies>
         <dependency>
@@ -30,7 +31,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>5.0.0.Alpha2</version>
+            <version>${netty.version}</version>
         </dependency>
 
         <dependency>

@@ -15,30 +15,30 @@ public class NettyProperties {
     /**
      * boss线程数量
      */
-    private Integer bossNum ;
+    private Integer bossNum = 2;
 
     /**
      * worker线程数量
      */
-    private Integer workerNum;
+    private Integer workerNum = 4;
 
     /**
      * 服务器主端口 默认9000
      */
-    private Integer port ;
+    private Integer port = 9000;
 
     /**
      * 连接超时时间 默认为30s
      */
-    private Integer timeout;
+    private Integer timeout = 30000;
 
     /**
      * 是否校验token
      */
-    private boolean needCheckToken;
+    private boolean needCheckToken = false;
 
     /**
      * header中token名称
      */
-    private String tokenKey;
+    private String tokenKey = "token";
 }
