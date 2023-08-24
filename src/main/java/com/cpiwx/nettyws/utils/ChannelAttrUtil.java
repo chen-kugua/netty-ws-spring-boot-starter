@@ -1,5 +1,6 @@
 package com.cpiwx.nettyws.utils;
 
+import com.cpiwx.nettyws.constant.Constants;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
@@ -21,5 +22,10 @@ public class ChannelAttrUtil {
             return tClass.cast(value);
         }
         return null;
+    }
+
+    public static String getIdentity(ChannelHandlerContext ctx) {
+        Object identity = ctx.channel().attr(AttributeKey.valueOf(Constants.IDENTITY_KEY)).get();
+        return identity == null ? null : identity.toString();
     }
 }

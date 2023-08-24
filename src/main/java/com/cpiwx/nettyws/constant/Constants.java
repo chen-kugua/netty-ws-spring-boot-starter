@@ -12,6 +12,8 @@ public class Constants {
 
     public static String TOKEN_KEY = "token";
 
+    public static boolean NEED_CHECK_TOKEN = false;
+
     public static final String PING = "ping";
 
     public static final String PONG = "pong";
