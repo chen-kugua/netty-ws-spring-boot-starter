@@ -8,10 +8,9 @@ package com.cpiwx.nettyws.enums;
  */
 public enum MessageTypeEnum {
     //定义消息类型
-    CONNECT(1, "第一次（或重连）初始化连接"),
-    API(2, "访问api"),
-    SINGLE_CHAT(3, "单聊"),
-    GROUP_CHAT(4, "群聊");
+    API(1, "访问api"),
+    SINGLE_CHAT(2, "单聊"),
+    GROUP_CHAT(3, "群聊");
 
     public final Integer code;
     public final String content;
