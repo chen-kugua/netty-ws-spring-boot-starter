@@ -65,9 +65,16 @@ public class NettyProperties {
      */
     private String identityKey = "userId";
 
+    /**
+     * ws最大帧
+     *  默认65536 客户端传递比较大的对象时，maxFrameSize参数的值需要调大
+     */
+    private Integer maxFrameSize = 65536;
+
     @PostConstruct
     public void init() {
         Constants.IDENTITY_KEY = identityKey;
         Constants.TOKEN_KEY = tokenKey;
+        Constants.NEED_CHECK_TOKEN = needCheckToken;
     }
 }

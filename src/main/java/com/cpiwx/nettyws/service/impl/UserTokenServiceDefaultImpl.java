@@ -1,8 +1,10 @@
-package com.cpiwx.nettyws.service;
+package com.cpiwx.nettyws.service.impl;
 
+import com.cpiwx.nettyws.service.UserTokenService;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,6 +28,11 @@ public class UserTokenServiceDefaultImpl implements UserTokenService {
     @Override
     public ChannelHandlerContext getContext(String identity) {
         return clients.get(identity);
+    }
+
+    @Override
+    public Collection<ChannelHandlerContext> getAllContext() {
+        return clients.values();
     }
 
     @Override
