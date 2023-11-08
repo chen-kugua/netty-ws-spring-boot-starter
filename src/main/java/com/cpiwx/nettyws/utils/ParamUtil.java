@@ -2,8 +2,6 @@ package com.cpiwx.nettyws.utils;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.cpiwx.nettyws.constant.Constants;
-import io.netty.handler.codec.http.FullHttpRequest;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,7 +31,7 @@ public class ParamUtil {
 
     public ParamUtil(String data) {
         this.data = data;
-        this.isJson = JSONUtil.isTypeJSON(data);
+        this.isJson = JSONUtil.isJson(data);
         if (this.isJson) {
             this.jsonObject = JSONUtil.parseObj(data);
         }
@@ -101,16 +99,18 @@ public class ParamUtil {
     }
 
     public static Map<String, String> getUriParams(String uri) {
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> map = new HashMap<>();
         if (null != uri && uri.contains("?")) {
             String[] uriArray = uri.split("\\?");
-            for (String param : uriArray) {
-                String[] split = param.split("=");
+            String params = uriArray[1];
+            String[] splits = params.split("&");
+            for (String s : splits) {
+                String[] split = s.split("=");
                 if (split.length == 2) {
-                    params.put(split[0], split[1]);
+                    map.put(split[0], split[1]);
                 }
             }
         }
-        return params;
+        return map;
     }
 }
