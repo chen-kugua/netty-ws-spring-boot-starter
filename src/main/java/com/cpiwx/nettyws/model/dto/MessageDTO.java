@@ -1,6 +1,8 @@
 package com.cpiwx.nettyws.model.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 /**
  * @Classname MessageDTO
@@ -9,6 +11,8 @@ import lombok.Data;
  * @Author chenPan
  */
 @Data
+@Accessors(chain = true)
+@NoArgsConstructor
 public class MessageDTO {
     private String type;
     /**

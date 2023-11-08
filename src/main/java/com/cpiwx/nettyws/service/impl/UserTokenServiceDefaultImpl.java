@@ -27,6 +27,9 @@ public class UserTokenServiceDefaultImpl implements UserTokenService {
 
     @Override
     public ChannelHandlerContext getContext(String identity) {
+        if (null == identity) {
+            return null;
+        }
         return clients.get(identity);
     }
 
@@ -37,6 +40,8 @@ public class UserTokenServiceDefaultImpl implements UserTokenService {
 
     @Override
     public void removeContext(String identity) {
-        clients.remove(identity);
+        if (null != identity) {
+            clients.remove(identity);
+        }
     }
 }

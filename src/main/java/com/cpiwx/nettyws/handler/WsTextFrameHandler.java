@@ -76,7 +76,7 @@ public class WsTextFrameHandler extends SimpleChannelInboundHandler<TextWebSocke
             WsMessageUtil.sendMsg(ctx, Constants.PONG);
             return;
         }
-        if (!JSONUtil.isTypeJSON(body)) {
+        if (!JSONUtil.isJson(body)) {
             WsMessageUtil.sendMsg(ctx, Result.fail(ErrorCodeEnum.BODY_ERR));
             return;
         }
