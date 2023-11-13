@@ -10,6 +10,8 @@ public class Constants {
 
     public static String IDENTITY_KEY = "userId";
 
+    public static String CHANNEL_ID = "channelId";
+
     public static String TOKEN_KEY = "token";
 
     public static boolean NEED_CHECK_TOKEN = false;
@@ -17,4 +19,6 @@ public class Constants {
     public static final String PING = "ping";
 
     public static final String PONG = "pong";
+
+    public static boolean ALLOW_MULTI_CLIENT = false;
 }
