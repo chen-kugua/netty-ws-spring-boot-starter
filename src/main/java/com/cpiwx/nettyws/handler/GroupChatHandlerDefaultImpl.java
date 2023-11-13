@@ -2,13 +2,13 @@ package com.cpiwx.nettyws.handler;
 
 import cn.hutool.core.collection.CollUtil;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
-import com.cpiwx.nettyws.service.UserTokenService;
 import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author chenPan
@@ -17,14 +17,16 @@ import java.util.Collection;
 @Slf4j
 public class GroupChatHandlerDefaultImpl implements GroupChatHandler {
     @Resource
-    private UserTokenService userTokenService;
+    private UserTokenHandler userTokenService;
 
     @Override
-    public void handle(ChannelHandlerContext ctx, MessageDTO dto) {
-        Collection<ChannelHandlerContext> allContext = userTokenService.getAllContext();
+    public void sendMsg(ChannelHandlerContext ctx, MessageDTO dto) {
+        List<CopyOnWriteArrayList<ChannelHandlerContext>> allContext = userTokenService.getAllContext();
         if (CollUtil.isNotEmpty(allContext)) {
-            for (ChannelHandlerContext context : allContext) {
-                WsMessageUtil.sendMsg(context, dto);
+            for (CopyOnWriteArrayList<ChannelHandlerContext> context : allContext) {
+                for (ChannelHandlerContext c : context) {
+                    WsMessageUtil.sendMsg(c, dto);
+                }
             }
         }
     }

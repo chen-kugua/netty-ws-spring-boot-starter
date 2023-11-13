@@ -1,12 +1,13 @@
 package com.cpiwx.nettyws.handler;
 
+import cn.hutool.core.collection.CollUtil;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
-import com.cpiwx.nettyws.service.UserTokenService;
 import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author chenPan
@@ -15,13 +16,23 @@ import javax.annotation.Resource;
 @Slf4j
 public class SingleChatHandlerDefaultImpl implements SingleChatHandler {
     @Resource
-    private UserTokenService userTokenService;
+    private UserTokenHandler userTokenService;
 
     @Override
-    public void sendMsg(ChannelHandlerContext ctx, MessageDTO dto) {
+    public boolean sendMsg(ChannelHandlerContext ctx, MessageDTO dto) {
         String toId = dto.getToId();
-        ChannelHandlerContext context = userTokenService.getContext(toId);
-        boolean success = WsMessageUtil.sendMsg(context, dto);
-        log.debug("{}发送消息发送给【{}】，结果：【{}】", dto.getFromId(), toId, success);
+        CopyOnWriteArrayList<ChannelHandlerContext> channels = userTokenService.getContextBatch(toId);
+        boolean success = false;
+        if (CollUtil.isEmpty(channels)) {
+            return false;
+        }
+        for (ChannelHandlerContext channel : channels) {
+            boolean b = WsMessageUtil.sendMsg(channel, dto);
+            if (b) {
+                success = true;
+            }
+        }
+        return success;
     }
+
 }

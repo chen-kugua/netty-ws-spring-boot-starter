@@ -9,6 +9,6 @@ import io.netty.channel.ChannelHandlerContext;
  **/
 public interface GroupChatHandler {
 
-    void handle(ChannelHandlerContext ctx, MessageDTO dto);
+    void sendMsg(ChannelHandlerContext ctx, MessageDTO dto);
 
 }

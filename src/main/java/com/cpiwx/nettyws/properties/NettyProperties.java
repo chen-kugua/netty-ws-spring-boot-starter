@@ -71,10 +71,16 @@ public class NettyProperties {
      */
     private Integer maxFrameSize = 65536;
 
+    /**
+     * 是否允许通一个客户端ID（userId）建立不同的连接
+     */
+    private boolean allowMultiClient = false;
+
     @PostConstruct
     public void init() {
         Constants.IDENTITY_KEY = identityKey;
         Constants.TOKEN_KEY = tokenKey;
         Constants.NEED_CHECK_TOKEN = needCheckToken;
+        Constants.ALLOW_MULTI_CLIENT = allowMultiClient;
     }
 }

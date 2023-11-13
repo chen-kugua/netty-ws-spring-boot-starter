@@ -92,7 +92,7 @@ public class WsTextFrameHandler extends SimpleChannelInboundHandler<TextWebSocke
         } else if (MessageTypeEnum.SINGLE_CHAT.name().equalsIgnoreCase(type)) {
             singleChatHandler.sendMsg(ctx, messageDto);
         } else if (MessageTypeEnum.GROUP_CHAT.name().equalsIgnoreCase(type)) {
-            groupChatHandler.handle(ctx, messageDto);
+            groupChatHandler.sendMsg(ctx, messageDto);
         } else {
             if (customMessageHandler != null) {
                 customMessageHandler.handle(ctx, messageDto);

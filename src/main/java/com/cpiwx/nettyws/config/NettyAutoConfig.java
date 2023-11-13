@@ -9,8 +9,8 @@ import com.cpiwx.nettyws.handler.SingleChatHandlerDefaultImpl;
 import com.cpiwx.nettyws.handler.WsTextFrameHandler;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import com.cpiwx.nettyws.service.CustomHandlerService;
-import com.cpiwx.nettyws.service.UserTokenService;
-import com.cpiwx.nettyws.service.impl.UserTokenServiceDefaultImpl;
+import com.cpiwx.nettyws.handler.UserTokenHandler;
+import com.cpiwx.nettyws.handler.UserTokenHandlerDefaultImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -138,9 +138,9 @@ public class NettyAutoConfig {
      * 默认的权限管理和用户映射
      */
     @Bean
-    @ConditionalOnMissingBean(UserTokenService.class)
-    public UserTokenService userTokenService() {
-        return new UserTokenServiceDefaultImpl();
+    @ConditionalOnMissingBean(UserTokenHandler.class)
+    public UserTokenHandler userTokenService() {
+        return new UserTokenHandlerDefaultImpl();
     }
 
     /**

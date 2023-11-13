@@ -2,7 +2,6 @@ package com.cpiwx.nettyws.handler;
 
 import com.cpiwx.nettyws.constant.Constants;
 import com.cpiwx.nettyws.properties.NettyProperties;
-import com.cpiwx.nettyws.service.UserTokenService;
 import com.cpiwx.nettyws.utils.ChannelAttrUtil;
 import com.cpiwx.nettyws.utils.ParamUtil;
 import io.netty.channel.ChannelHandler;
@@ -28,7 +27,7 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
     @Setter(onMethod_ = @Autowired)
     private NettyProperties nettyProperties;
     @Setter(onMethod_ = @Autowired)
-    private UserTokenService userTokenService;
+    private UserTokenHandler userTokenService;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -50,7 +49,7 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
                 String token = params.get(nettyProperties.getTokenKey());
                 boolean validToken = userTokenService.checkToken(token);
                 if (!validToken) {
-                    log.warn("Invalid Token:【{}】,disConnect", token);
+                    log.warn("Invalid Token:【{}】,close", token);
                     ctx.close();
                     return;
                 }
@@ -76,17 +75,18 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
         // ctx.channel().id() 表示唯一的值
         // channelRead之前调用 只有最开始建立连接时调用一次
         ChannelId id = ctx.channel().id();
-        log.info("【{}】建立连接", id);
+        log.info("【{}】建立连接", id.asShortText());
     }
 
     // 客户端离线
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        String id = ctx.channel().id().asShortText();//表示唯一的值
-        log.info("【{}】连接断开", id);
+        //表示唯一的值
+        String id = ctx.channel().id().asShortText();
         String identity = ChannelAttrUtil.getIdentity(ctx);
         if (null != identity) {
-            userTokenService.removeContext(identity);
+            userTokenService.removeContext(identity, ctx);
+            log.info("【{}】：【{}】连接断开", id, identity);
         }
         ctx.close();
     }
@@ -97,7 +97,7 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
         log.error("异常发生，异常消息 ", cause);
         String identity = ChannelAttrUtil.getIdentity(ctx);
         if (null != identity) {
-            userTokenService.removeContext(identity);
+            userTokenService.removeContext(identity, ctx);
         }
         ctx.close();
     }

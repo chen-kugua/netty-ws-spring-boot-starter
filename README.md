@@ -85,7 +85,7 @@ public class MessageController {
 1、com.cpiwx.nettyws.service.CustomHandlerService  
 实现该接口重写addHandler()方法即可添加自定义处理器  
 
-2、com.cpiwx.nettyws.service.UserTokenService  
+2、com.cpiwx.nettyws.handler.UserTokenHandler  
 实现该接口可自定义token校验和客户端映射关系维护  
 
 3、com.cpiwx.nettyws.handler.CustomMessageHandler  
