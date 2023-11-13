@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @date 2023-08-22 16:27
  **/
 public abstract class UserTokenHandler {
-    ConcurrentHashMap<String, CopyOnWriteArrayList<ChannelHandlerContext>> clients = new ConcurrentHashMap<>();
+    protected ConcurrentHashMap<String, CopyOnWriteArrayList<ChannelHandlerContext>> clients = new ConcurrentHashMap<>();
 
     /**
      * 校验token
@@ -22,7 +22,7 @@ public abstract class UserTokenHandler {
      * @param token token
      * @return 是否合法token
      */
-    abstract boolean checkToken(String token);
+    public abstract boolean checkToken(String token);
 
     /**
      * 将连接加入客户端连接池管理
