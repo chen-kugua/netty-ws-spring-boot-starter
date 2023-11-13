@@ -9,13 +9,11 @@ import io.netty.channel.ChannelHandlerContext;
  **/
 public interface SingleChatHandler {
 
-    void handle(ChannelHandlerContext ctx, MessageDTO dto);
-
     /**
      * 发送消息
-     * @param dto 消息
+     * @param ctx 当前通道对象 可为null
+     * @param dto 消息体
      */
-    void sendMessage(MessageDTO dto);
-
+    void sendMsg(ChannelHandlerContext ctx, MessageDTO dto);
 
 }

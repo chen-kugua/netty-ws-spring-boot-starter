@@ -18,15 +18,7 @@ public class SingleChatHandlerDefaultImpl implements SingleChatHandler {
     private UserTokenService userTokenService;
 
     @Override
-    public void handle(ChannelHandlerContext ctx, MessageDTO dto) {
-        String toId = dto.getToId();
-        ChannelHandlerContext context = userTokenService.getContext(toId);
-        boolean success = WsMessageUtil.sendMsg(context, dto);
-        log.debug("{}发送消息发送给【{}】，结果：【{}】", dto.getFromId(), toId, success);
-    }
-
-    @Override
-    public void sendMessage(MessageDTO dto) {
+    public void sendMsg(ChannelHandlerContext ctx, MessageDTO dto) {
         String toId = dto.getToId();
         ChannelHandlerContext context = userTokenService.getContext(toId);
         boolean success = WsMessageUtil.sendMsg(context, dto);
