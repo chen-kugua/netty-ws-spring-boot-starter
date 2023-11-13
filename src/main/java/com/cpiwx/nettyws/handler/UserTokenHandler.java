@@ -97,16 +97,15 @@ public abstract class UserTokenHandler {
             clients.remove(identity);
             return;
         }
-
-        Iterator<ChannelHandlerContext> it = channels.iterator();
-        while (it.hasNext()) {
-            ChannelHandlerContext channel = it.next();
-            if (channel == ctx) {
-                closeChannel(channel);
-                it.remove();
-                break;
+        // CopyOnWriteArrayList
+        for (int i = channels.size() - 1; i >= 0; i--) {
+            ChannelHandlerContext context = channels.get(i);
+            if (context == ctx) {
+                closeChannel(context);
+                channels.remove(i);
             }
         }
+
     }
 
     /**
