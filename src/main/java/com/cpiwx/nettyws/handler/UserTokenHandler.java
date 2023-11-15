@@ -4,10 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import com.cpiwx.nettyws.constant.Constants;
 import io.netty.channel.ChannelHandlerContext;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * @author chenPan
@@ -75,7 +75,7 @@ public abstract class UserTokenHandler {
      * @return List<CopyOnWriteArrayList < ChannelHandlerContext>>
      */
     public List<CopyOnWriteArrayList<ChannelHandlerContext>> getAllContext() {
-        return (List<CopyOnWriteArrayList<ChannelHandlerContext>>) clients.values();
+        return clients.values().stream().filter(CollUtil::isNotEmpty).collect(Collectors.toList());
     }
 
     /**
@@ -132,5 +132,14 @@ public abstract class UserTokenHandler {
             channel.close();
         } catch (Exception ignored) {
         }
+    }
+
+    /**
+     * 获取客户端连接数
+     *
+     * @return 客户端连接数
+     */
+    public int getClientCount() {
+        return getAllContext().stream().mapToInt(CopyOnWriteArrayList::size).sum();
     }
 }

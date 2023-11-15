@@ -74,7 +74,17 @@ public class NettyProperties {
     /**
      * 是否允许通一个客户端ID（userId）建立不同的连接
      */
-    private boolean allowMultiClient = false;
+    private boolean allowMultiClient;
+
+    /**
+     * 开启服务端ping 维护心跳
+     */
+    private boolean enableServerPing;
+
+    /**
+     * 秒 隔多长时间发送ping
+     */
+    private Integer timeInterval = 15;
 
     @PostConstruct
     public void init() {
