@@ -86,6 +86,26 @@ public class NettyProperties {
      */
     private Integer timeInterval = 15;
 
+    /**
+     * 离线消息存储核心线程
+     */
+    private Integer corePoolSize = 2;
+
+    /**
+     * 离线消息存储最大线程
+     */
+    private Integer maxPoolSize = 8;
+
+    /**
+     * 线程时间 S
+     */
+    private Integer keepAliveTime = 60;
+
+    /**
+     * 队列容量
+     */
+    private Integer queueCapacity = 500;
+
     @PostConstruct
     public void init() {
         Constants.IDENTITY_KEY = identityKey;

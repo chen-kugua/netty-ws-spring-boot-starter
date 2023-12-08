@@ -1,9 +1,11 @@
 package com.cpiwx.nettyws.handler;
 
 import com.cpiwx.nettyws.constant.Constants;
+import com.cpiwx.nettyws.event.ChannelConnectEvent;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import com.cpiwx.nettyws.utils.ChannelAttrUtil;
 import com.cpiwx.nettyws.utils.ParamUtil;
+import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
@@ -12,6 +14,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
 
@@ -28,6 +31,8 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
     private NettyProperties nettyProperties;
     @Setter(onMethod_ = @Autowired)
     private UserTokenHandler userTokenService;
+    @Setter(onMethod_ = @Autowired)
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -57,6 +62,7 @@ public class AuthWebSocketHandler extends ChannelInboundHandlerAdapter {
                 ChannelAttrUtil.setAttr(ctx, Constants.TOKEN_KEY, token);
             }
             sendRedirect(request);
+            applicationEventPublisher.publishEvent(new ChannelConnectEvent(this, ctx, identity));
         }
         super.channelRead(ctx, msg);
     }

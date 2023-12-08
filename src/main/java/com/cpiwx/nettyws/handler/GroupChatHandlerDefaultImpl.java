@@ -2,6 +2,7 @@ package com.cpiwx.nettyws.handler;
 
 import cn.hutool.core.collection.CollUtil;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
+import com.cpiwx.nettyws.model.dto.OfflineMessageDTO;
 import com.cpiwx.nettyws.utils.WsMessageUtil;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
@@ -18,14 +19,22 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class GroupChatHandlerDefaultImpl implements GroupChatHandler {
     @Resource
     private UserTokenHandler userTokenService;
+    @Resource
+    private OfflineMessageHandler offlineMessageHandler;
 
     @Override
     public void sendMsg(ChannelHandlerContext ctx, MessageDTO dto) {
         List<CopyOnWriteArrayList<ChannelHandlerContext>> allContext = userTokenService.getAllContext();
+        boolean sendSuccess;
         if (CollUtil.isNotEmpty(allContext)) {
             for (CopyOnWriteArrayList<ChannelHandlerContext> context : allContext) {
+                sendSuccess = false;
                 for (ChannelHandlerContext c : context) {
-                    WsMessageUtil.sendMsg(c, dto);
+                    sendSuccess = WsMessageUtil.sendMsg(c, dto);
+                }
+                if (!sendSuccess) {
+                    log.debug("发送消息失败，用户离线，保存离线消息");
+                    offlineMessageHandler.putMessage(OfflineMessageDTO.of(dto));
                 }
             }
         }

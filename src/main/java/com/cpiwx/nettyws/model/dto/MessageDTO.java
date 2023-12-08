@@ -1,5 +1,6 @@
 package com.cpiwx.nettyws.model.dto;
 
+import com.cpiwx.nettyws.enums.MessageTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -14,6 +15,10 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class MessageDTO {
+    /**
+     * {@link MessageTypeEnum}
+     * MessageTypeEnum#name
+     */
     private String type;
     /**
      * 请求地址 当 type为APi的时候必填

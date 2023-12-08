@@ -1,16 +1,19 @@
 package com.cpiwx.nettyws.config;
 
+import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.cpiwx.nettyws.handler.AuthWebSocketHandler;
 import com.cpiwx.nettyws.handler.GroupChatHandler;
 import com.cpiwx.nettyws.handler.GroupChatHandlerDefaultImpl;
+import com.cpiwx.nettyws.handler.OfflineMessageHandler;
+import com.cpiwx.nettyws.handler.OfflineMessageHandlerDefaultImpl;
 import com.cpiwx.nettyws.handler.RequestHandler;
 import com.cpiwx.nettyws.handler.SingleChatHandler;
 import com.cpiwx.nettyws.handler.SingleChatHandlerDefaultImpl;
+import com.cpiwx.nettyws.handler.UserTokenHandler;
+import com.cpiwx.nettyws.handler.UserTokenHandlerDefaultImpl;
 import com.cpiwx.nettyws.handler.WsTextFrameHandler;
 import com.cpiwx.nettyws.properties.NettyProperties;
 import com.cpiwx.nettyws.service.CustomHandlerService;
-import com.cpiwx.nettyws.handler.UserTokenHandler;
-import com.cpiwx.nettyws.handler.UserTokenHandlerDefaultImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -33,8 +36,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -46,16 +56,17 @@ import javax.annotation.Resource;
 @Slf4j
 @EnableConfigurationProperties(NettyProperties.class)
 @Import({NettyServerBot.class, RequestHandler.class})
+@EnableAsync
 public class NettyAutoConfig {
     @Resource
     private NettyProperties nettyProperties;
 
     @Setter(onMethod_ = @Autowired(required = false))
     private CustomHandlerService customHandlerService;
+
     /**
      * boss 线程池
      * 负责客户端连接
-     *
      */
     @Bean(destroyMethod = "shutdownGracefully")
     public NioEventLoopGroup bossGroup() {
@@ -65,7 +76,6 @@ public class NettyAutoConfig {
     /**
      * worker线程池
      * 负责业务处理
-     *
      */
     @Bean(destroyMethod = "shutdownGracefully")
     public NioEventLoopGroup workerGroup() {
@@ -161,4 +171,28 @@ public class NettyAutoConfig {
         return new GroupChatHandlerDefaultImpl();
     }
 
+    @Bean
+    @ConditionalOnMissingBean(OfflineMessageHandler.class)
+    public OfflineMessageHandler offlineMessageHandler() {
+        return new OfflineMessageHandlerDefaultImpl();
+    }
+
+    @Bean("offlineMessageExecutor")
+    public ExecutorService offlineMessageExecutor() {
+        ThreadFactory factory = new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNamePrefix("offline-message--")
+                .build();
+        // 无容量队列
+        ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(nettyProperties.getQueueCapacity());
+        return new ThreadPoolExecutor(
+                nettyProperties.getCorePoolSize(),
+                nettyProperties.getMaxPoolSize(),
+                nettyProperties.getKeepAliveTime(),
+                TimeUnit.SECONDS,
+                queue,
+                factory,
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
 }
