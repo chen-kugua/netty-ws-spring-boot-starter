@@ -46,4 +46,11 @@ public class OfflineMessageHandlerDefaultImpl extends OfflineMessageHandler {
     public List<OfflineMessageDTO> getMessage(String clientId) {
         return offlineMessageMap.get(clientId);
     }
+
+    @Override
+    public List<OfflineMessageDTO> getMessageAndClear(String clientId) {
+        List<OfflineMessageDTO> message = this.getMessage(clientId);
+        offlineMessageMap.remove(clientId);
+        return message;
+    }
 }

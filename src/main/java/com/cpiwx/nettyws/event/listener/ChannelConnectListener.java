@@ -33,7 +33,7 @@ public class ChannelConnectListener implements ApplicationListener<ChannelConnec
     public void onApplicationEvent(ChannelConnectEvent event) {
         log.debug("ChannelConnectListener 监听到连接事件");
         WsMessageUtil.sendMsg(event.getCtx(), "连接成功");
-        List<OfflineMessageDTO> messages = offlineMessageHandler.getMessage(event.getClientId());
+        List<OfflineMessageDTO> messages = offlineMessageHandler.getMessageAndClear(event.getClientId());
         if (CollUtil.isNotEmpty(messages)) {
             log.debug("发送离线消息...");
             for (OfflineMessageDTO message : messages) {

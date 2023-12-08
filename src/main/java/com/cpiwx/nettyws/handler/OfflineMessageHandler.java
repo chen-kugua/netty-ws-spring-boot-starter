@@ -28,4 +28,6 @@ public abstract class OfflineMessageHandler {
      * @return 消息体
      */
     public abstract List<OfflineMessageDTO> getMessage(String clientId);
+
+    public abstract List<OfflineMessageDTO> getMessageAndClear(String clientId);
 }
