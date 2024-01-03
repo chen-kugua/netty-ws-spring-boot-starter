@@ -34,4 +34,40 @@ public class Constants {
      * 未读数
      */
     public static final String UNREAD_PREDIX = "unread:";
+
+    /**
+     * 用于IP定位转换
+     */
+    public static final String REGION = "内网IP|内网IP";
+    /**
+     * win 系统
+     */
+    public static final String WIN = "win";
+
+    /**
+     * mac 系统
+     */
+    public static final String MAC = "mac";
+
+    /**
+     * 常用接口
+     */
+    // IP归属地查询
+    public static final String IP_URL = "http://whois.pconline.com.cn/ipJson.jsp?ip=%s&json=true";
+
+    public static final String LOG_TABLE_NAME = "sys_log";
+
+    public static final String INIT_SQL_PATH = "sql/sysLogInit.sql";
+
+    public static final String TIMEOUT_WARNING_PREFIX = "TWarning:";
+    public static final String ERROR_WARNING_PREFIX = "EWarning:";
+
+    public static final String YES = "1";
+
+    public static final String LOG_TYPE_INFO = "INFO";
+    public static final String LOG_TYPE_ERR = "ERROR";
+
+    public static final String MAIL_TYPE_TEXT = "text";
+
+    public static final String MAIL_TYPE_HTML = "html";
 }

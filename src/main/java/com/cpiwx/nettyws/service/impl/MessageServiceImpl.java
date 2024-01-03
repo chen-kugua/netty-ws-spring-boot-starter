@@ -3,11 +3,11 @@ package com.cpiwx.nettyws.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.cpiwx.nettyws.constant.Constants;
-import com.cpiwx.nettyws.domain.Message;
-import com.cpiwx.nettyws.model.dto.CommonDTO;
+import com.cpiwx.nettyws.entity.Message;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
 import com.cpiwx.nettyws.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 public class MessageServiceImpl implements MessageService {
     @Resource
     private DataSource dataSource;
-    @Resource
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @Override

@@ -1,7 +1,7 @@
 package com.cpiwx.nettyws.service;
 
 
-import com.cpiwx.nettyws.domain.Message;
+import com.cpiwx.nettyws.entity.Message;
 import com.cpiwx.nettyws.model.dto.MessageDTO;
 
 import java.util.List;
