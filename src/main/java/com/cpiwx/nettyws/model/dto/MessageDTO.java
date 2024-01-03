@@ -1,5 +1,6 @@
 package com.cpiwx.nettyws.model.dto;
 
+import com.cpiwx.nettyws.enums.ContentTypeEnum;
 import com.cpiwx.nettyws.enums.MessageTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,8 @@ public class MessageDTO {
     private String fromId;
 
     private String toId;
+
+    private ContentTypeEnum contentType;
 
     private String content;
 

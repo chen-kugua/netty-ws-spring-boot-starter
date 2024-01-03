@@ -21,4 +21,17 @@ public class Constants {
     public static final String PONG = "pong";
 
     public static boolean ALLOW_MULTI_CLIENT = false;
+
+    public static final long WORKER_ID = 1L;
+    public static final long CENTER_ID = 1L;
+
+    /**
+     * 会话消息列表前缀
+     */
+    public static final String SESSION_LIST_PREFIX = "sessionList:";
+
+    /**
+     * 未读数
+     */
+    public static final String UNREAD_PREDIX = "unread:";
 }
